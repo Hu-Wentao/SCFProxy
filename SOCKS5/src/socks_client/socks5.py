@@ -1,19 +1,24 @@
-import asyncio
 import argparse
-from socket import inet_ntoa
+import asyncio
 from functools import partial
+from socket import inet_ntoa
 
-import uvloop
 import shortuuid
+import uvloop
 
 from bridge import scf_handle
 from models import Conn, http, uid_socket
 from utils import print_time, parse_args, cancel_task
 
+"""
+https://www.wangan.com/p/7fy7f36b5e17cc1e
+客户端服务
+# -u 云函数地址, bp 云函数桥端口, sp 本地socks端口, user用户,passwd密码 
+python3 socks5.py -u "https://service-xxx.sh.apigw.tencentcs.com/release/xxx" -bp 9001 -sp 9002 --user test --passwd test
+"""
 
-async def socks_handle(
-    args: argparse.Namespace, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-):
+
+async def socks_handle(args: argparse.Namespace, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     client = Conn("Client", reader, writer)
 
     await socks5_auth(client, args)
@@ -37,9 +42,7 @@ async def socks5_auth(client: Conn, args: argparse.Namespace):
     methods = await client.read(nmethods)
 
     if args.user and b"\x02" not in methods:
-        cancel_task(
-            f"Unauthenticated access from {client.writer.get_extra_info('peername')[0]}"
-        )
+        cancel_task(f"Unauthenticated access from {client.writer.get_extra_info('peername')[0]}")
 
     if b"\x02" in methods:
         await client.write(b"\x05\x02")
@@ -62,9 +65,7 @@ async def socks5_user_auth(client: Conn, args: argparse.Namespace):
         await client.write(b"\x01\x00")
     else:
         await client.write(b"\x01\x01")
-        cancel_task(
-            f"Wrong user/passwd connection from {client.writer.get_extra_info('peername')[0]}"
-        )
+        cancel_task(f"Wrong user/passwd connection from {client.writer.get_extra_info('peername')[0]}")
 
 
 async def socks5_connect(client: Conn):

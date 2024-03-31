@@ -1,10 +1,15 @@
+"""
+在云函数中创建socks5服务
+https://www.wangan.com/p/7fy7f36b5e17cc1e
+"""
 import json
-import socket
+import os
 import select
+import socket
 
-
-bridge_ip = ""
-bridge_port = 1234
+# 安装client的服务器所配置的ip与端口
+bridge_ip = os.getenv('BRIDGE_IP')
+bridge_port = os.getenv("BRIDGE_PORT")
 
 
 def main_handler(event, context):
@@ -13,7 +18,7 @@ def main_handler(event, context):
     out.connect((data["host"], data["port"]))
 
     bridge = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    bridge.connect((bridge_ip, bridge_port))
+    bridge.connect((bridge_ip, int(bridge_port)))
     bridge.send(data["uid"].encode("ascii"))
 
     while True:
